@@ -1,6 +1,5 @@
-from app.gui import App
+from app.control_panel import ControlPanel
 
 if __name__ == "__main__":
-    app = App()
+    app = ControlPanel()
     app.mainloop()
-

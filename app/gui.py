@@ -465,7 +465,7 @@ class WorkerTimesTab(ttk.Frame):
 
 
 # ─────────────────────────────────────────────
-# Main App
+# Main App  (standalone entry-point)
 # ─────────────────────────────────────────────
 
 class App(tk.Tk):
@@ -482,6 +482,42 @@ class App(tk.Tk):
         self.worker_times_tab = WorkerTimesTab(notebook)
 
         notebook.add(self.worker_codes_tab, text="  Worker Codes  ")
-        notebook.add(self.workers_tab, text="  Workers  ")
+        notebook.add(self.workers_tab,      text="  Workers  ")
         notebook.add(self.worker_times_tab, text="  Worker Times  ")
+
+
+# ─────────────────────────────────────────────
+# Worker Management as a Toplevel child window
+# (used by the Control Panel)
+# ─────────────────────────────────────────────
+
+class WorkerManagementWindow(tk.Toplevel):
+    """Opens the Worker Management UI inside a Toplevel window so it can be
+    launched from the Santa Rita Control Panel without spawning a second
+    Tk root instance."""
+
+    def __init__(self, parent):
+        super().__init__(parent)
+        self.title("Worker Management")
+        self.resizable(True, True)
+        self.minsize(900, 500)
+
+        # centre relative to parent
+        self.update_idletasks()
+        px = parent.winfo_x() + (parent.winfo_width()  - self.winfo_width())  // 2
+        py = parent.winfo_y() + (parent.winfo_height() - self.winfo_height()) // 2
+        self.geometry(f"+{px}+{py}")
+
+        notebook = ttk.Notebook(self)
+        notebook.pack(fill="both", expand=True, padx=10, pady=10)
+
+        worker_codes_tab = WorkerCodesTab(notebook)
+        workers_tab      = WorkersTab(notebook)
+        worker_times_tab = WorkerTimesTab(notebook)
+
+        notebook.add(worker_codes_tab, text="  Worker Codes  ")
+        notebook.add(workers_tab,      text="  Workers  ")
+        notebook.add(worker_times_tab, text="  Worker Times  ")
+
+        self.grab_set()   # make it modal
 

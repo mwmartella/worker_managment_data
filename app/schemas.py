@@ -99,3 +99,71 @@ class WorkerTimeRead(BaseModel):
     start_date: datetime
     end_date: datetime | None
 
+
+# ─────────────────────────────────────────────
+# Business Schemas
+# ─────────────────────────────────────────────
+
+class BusinessCreate(BaseModel):
+    """Fields required to create a new Business.
+    created_at / updated_at are set automatically by the database."""
+    name: str
+    code: str | None = None
+
+
+class BusinessUpdate(BaseModel):
+    """Only hand-typed fields are editable. Timestamps are never updatable."""
+    name: str | None = None
+    code: str | None = None
+
+
+class BusinessRead(BaseModel):
+    """Full representation returned from the database."""
+    model_config = ConfigDict(from_attributes=True)
+
+    id: UUID
+    name: str
+    code: str | None
+    created_at: datetime
+    updated_at: datetime
+
+
+# ─────────────────────────────────────────────
+# Site Schemas
+# ─────────────────────────────────────────────
+
+class SiteCreate(BaseModel):
+    """Fields required to create a new Site.
+    created_at / updated_at are set automatically by the database."""
+    name: str
+    type: str
+    address: str
+    code: str | None = None
+    business_id: UUID | None = None
+    notes: str | None = None
+
+
+class SiteUpdate(BaseModel):
+    """Only hand-typed fields are editable. Timestamps and FKs are never updatable."""
+    name: str | None = None
+    type: str | None = None
+    address: str | None = None
+    code: str | None = None
+    notes: str | None = None
+
+
+class SiteRead(BaseModel):
+    """Full representation returned from the database."""
+    model_config = ConfigDict(from_attributes=True)
+
+    id: UUID
+    name: str
+    code: str | None
+    business_id: UUID | None
+    type: str
+    address: str
+    notes: str | None
+    created_at: datetime
+    updated_at: datetime
+
+

@@ -1,9 +1,10 @@
 from sqlalchemy.orm import Mapped, mapped_column
-from sqlalchemy import String, Date, Uuid, Numeric, DateTime, ForeignKey, Time
+from sqlalchemy import String, Date, Uuid, Numeric, DateTime, ForeignKey, Time, func, text
 from app.db import Base
 from datetime import date, datetime, time
 from decimal import Decimal
 import uuid6
+import uuid
 
 
 class Worker(Base):
@@ -64,3 +65,55 @@ class WorkerTime(Base):
     start_date: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
 
     end_date: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+
+
+class Business(Base):
+    __tablename__ = "businesses"
+
+    id: Mapped[uuid.UUID] = mapped_column(
+        Uuid(as_uuid=True), primary_key=True, default=uuid.uuid4
+    )
+
+    name: Mapped[str] = mapped_column(String, nullable=False)
+
+    code: Mapped[str | None] = mapped_column(String, unique=True, nullable=True)
+
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False
+    )
+
+
+class Site(Base):
+    __tablename__ = "sites"
+
+    id: Mapped[uuid.UUID] = mapped_column(
+        Uuid(as_uuid=True), primary_key=True, default=uuid.uuid4
+    )
+
+    name: Mapped[str] = mapped_column(String, nullable=False)
+
+    code: Mapped[str | None] = mapped_column(String, unique=True, nullable=True)
+
+    business_id: Mapped[uuid.UUID | None] = mapped_column(
+        Uuid(as_uuid=True), ForeignKey("businesses.id"), nullable=True
+    )
+
+    type: Mapped[str] = mapped_column(String, nullable=False)
+
+    address: Mapped[str] = mapped_column(String, nullable=False)
+
+    notes: Mapped[str | None] = mapped_column(String, nullable=True)
+
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False
+    )
+
+
