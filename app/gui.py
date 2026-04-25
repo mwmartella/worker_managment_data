@@ -198,6 +198,11 @@ def build_tree(parent, cols: list, widths: dict = None) -> ttk.Treeview:
 # WorkerCodes Tab
 # ─────────────────────────────────────────────
 
+def _top(widget) -> tk.Misc:
+    """Return the top-level window for a widget (used to anchor messageboxes)."""
+    return widget.winfo_toplevel()
+
+
 class WorkerCodesTab(ttk.Frame):
     def __init__(self, parent):
         super().__init__(parent)
@@ -252,7 +257,7 @@ class WorkerCodesTab(ttk.Frame):
                     wc["end_date"][:16] if wc["end_date"] else "",
                 ))
         except Exception as e:
-            messagebox.showerror("Error", str(e))
+            messagebox.showerror("Error", str(e), parent=_top(self))
 
     def _save(self):
         try:
@@ -260,7 +265,7 @@ class WorkerCodesTab(ttk.Frame):
             desc = self.code_desc.get().strip()
             rate = self.pay_rate.get().strip()
             if not name or not desc or not rate:
-                messagebox.showerror("Validation", "All fields are required.")
+                messagebox.showerror("Validation", "All fields are required.", parent=_top(self))
                 return
             api.create_worker_code(name, desc, rate)
             self.code_name.delete(0, tk.END)
@@ -268,12 +273,12 @@ class WorkerCodesTab(ttk.Frame):
             self.pay_rate.delete(0, tk.END)
             self.refresh()
         except Exception as e:
-            messagebox.showerror("Error", str(e))
+            messagebox.showerror("Error", str(e), parent=_top(self))
 
     def _selected_id(self):
         sel = self.tree.selection()
         if not sel:
-            messagebox.showwarning("Select a row", "Please select a record first.")
+            messagebox.showwarning("Select a row", "Please select a record first.", parent=_top(self))
             return None
         return sel[0]
 
@@ -284,7 +289,7 @@ class WorkerCodesTab(ttk.Frame):
         row = next((r for r in api.get_worker_codes() if r["code_id"] == iid), None)
         if not row:
             return
-        dlg = EditDialog(self, "Edit Worker Code", {
+        dlg = EditDialog(_top(self), "Edit Worker Code", {
             "Code Name":   row["code_name"],
             "Description": row["code_description"],
             "Pay Rate":    row["pay_rate"],
@@ -300,19 +305,19 @@ class WorkerCodesTab(ttk.Frame):
             )
             self.refresh()
         except Exception as e:
-            messagebox.showerror("Error", str(e))
+            messagebox.showerror("Error", str(e), parent=_top(self))
 
     def _end_record(self):
         iid = self._selected_id()
         if not iid:
             return
-        if not messagebox.askyesno("Confirm", "Set end date to now for this record?"):
+        if not messagebox.askyesno("Confirm", "Set end date to now for this record?", parent=_top(self)):
             return
         try:
             api.end_worker_code(iid)
             self.refresh()
         except Exception as e:
-            messagebox.showerror("Error", str(e))
+            messagebox.showerror("Error", str(e), parent=_top(self))
 
 
 # ─────────────────────────────────────────────
@@ -376,7 +381,7 @@ class WorkersTab(ttk.Frame):
             if self._code_map:
                 self.worker_code_cb.current(0)
         except Exception as e:
-            messagebox.showerror("Error loading codes", str(e))
+            messagebox.showerror("Error loading codes", str(e), parent=_top(self))
 
     def refresh(self):
         self._load_codes()
@@ -394,30 +399,30 @@ class WorkersTab(ttk.Frame):
                     w["end_date"] or "",
                 ))
         except Exception as e:
-            messagebox.showerror("Error", str(e))
+            messagebox.showerror("Error", str(e), parent=_top(self))
 
     def _save(self):
         try:
             selected_label = self.worker_code_var.get()
             if not selected_label:
-                messagebox.showerror("Validation", "Please select a Worker Code.")
+                messagebox.showerror("Validation", "Please select a Worker Code.", parent=_top(self))
                 return
             first = self.first_name.get().strip()
             last  = self.last_name.get().strip()
             if not first or not last:
-                messagebox.showerror("Validation", "First and Last Name are required.")
+                messagebox.showerror("Validation", "First and Last Name are required.", parent=_top(self))
                 return
             api.create_worker(self._code_map[selected_label], first, last)
             self.first_name.delete(0, tk.END)
             self.last_name.delete(0, tk.END)
             self.refresh()
         except Exception as e:
-            messagebox.showerror("Error", str(e))
+            messagebox.showerror("Error", str(e), parent=_top(self))
 
     def _selected_id(self):
         sel = self.tree.selection()
         if not sel:
-            messagebox.showwarning("Select a row", "Please select a record first.")
+            messagebox.showwarning("Select a row", "Please select a record first.", parent=_top(self))
             return None
         return sel[0]
 
@@ -428,7 +433,7 @@ class WorkersTab(ttk.Frame):
         row = next((w for w in api.get_workers() if w["id"] == iid), None)
         if not row:
             return
-        dlg = EditDialog(self, "Edit Worker", {
+        dlg = EditDialog(_top(self), "Edit Worker", {
             "First Name": row["first_name"],
             "Last Name":  row["last_name"],
         })
@@ -438,19 +443,19 @@ class WorkersTab(ttk.Frame):
             api.update_worker(iid, dlg.result["First Name"], dlg.result["Last Name"])
             self.refresh()
         except Exception as e:
-            messagebox.showerror("Error", str(e))
+            messagebox.showerror("Error", str(e), parent=_top(self))
 
     def _end_record(self):
         iid = self._selected_id()
         if not iid:
             return
-        if not messagebox.askyesno("Confirm", "Set end date to today for this worker?"):
+        if not messagebox.askyesno("Confirm", "Set end date to today for this worker?", parent=_top(self)):
             return
         try:
             api.end_worker(iid)
             self.refresh()
         except Exception as e:
-            messagebox.showerror("Error", str(e))
+            messagebox.showerror("Error", str(e), parent=_top(self))
 
 
 # ─────────────────────────────────────────────
@@ -511,7 +516,7 @@ class WorkerTimesTab(ttk.Frame):
                     wt["end_date"][:16] if wt["end_date"] else "",
                 ))
         except Exception as e:
-            messagebox.showerror("Error", str(e))
+            messagebox.showerror("Error", str(e), parent=_top(self))
 
     def _parse_time(self, value: str):
         value = value.strip()
@@ -528,11 +533,11 @@ class WorkerTimesTab(ttk.Frame):
         try:
             name = self.time_name.get().strip()
             if not name:
-                messagebox.showerror("Validation", "Time Name is required.")
+                messagebox.showerror("Validation", "Time Name is required.", parent=_top(self))
                 return
             start_t = self._parse_time(self.start_time.get())
             if start_t is None:
-                messagebox.showerror("Validation", "Start Time is required.")
+                messagebox.showerror("Validation", "Start Time is required.", parent=_top(self))
                 return
             end_t = self._parse_time(self.end_time.get())
             api.create_worker_time(
@@ -545,14 +550,14 @@ class WorkerTimesTab(ttk.Frame):
             self.end_time.delete(0, tk.END)
             self.refresh()
         except ValueError as e:
-            messagebox.showerror("Validation", str(e))
+            messagebox.showerror("Validation", str(e), parent=_top(self))
         except Exception as e:
-            messagebox.showerror("Error", str(e))
+            messagebox.showerror("Error", str(e), parent=_top(self))
 
     def _selected_id(self):
         sel = self.tree.selection()
         if not sel:
-            messagebox.showwarning("Select a row", "Please select a record first.")
+            messagebox.showwarning("Select a row", "Please select a record first.", parent=_top(self))
             return None
         return sel[0]
 
@@ -563,7 +568,7 @@ class WorkerTimesTab(ttk.Frame):
         row = next((wt for wt in api.get_worker_times() if wt["time_id"] == iid), None)
         if not row:
             return
-        dlg = EditDialog(self, "Edit Worker Time", {
+        dlg = EditDialog(_top(self), "Edit Worker Time", {
             "Time Name":           row["time_name"],
             "Start Time (HH:MM)":  (row["start_time"] or "")[:5],
             "End Time (HH:MM)":    (row["end_time"] or "")[:5],
@@ -581,21 +586,21 @@ class WorkerTimesTab(ttk.Frame):
             )
             self.refresh()
         except ValueError as e:
-            messagebox.showerror("Validation", str(e))
+            messagebox.showerror("Validation", str(e), parent=_top(self))
         except Exception as e:
-            messagebox.showerror("Error", str(e))
+            messagebox.showerror("Error", str(e), parent=_top(self))
 
     def _end_record(self):
         iid = self._selected_id()
         if not iid:
             return
-        if not messagebox.askyesno("Confirm", "Set end date to now for this record?"):
+        if not messagebox.askyesno("Confirm", "Set end date to now for this record?", parent=_top(self)):
             return
         try:
             api.end_worker_time(iid)
             self.refresh()
         except Exception as e:
-            messagebox.showerror("Error", str(e))
+            messagebox.showerror("Error", str(e), parent=_top(self))
 
 
 # ─────────────────────────────────────────────
