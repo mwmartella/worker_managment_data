@@ -202,3 +202,28 @@ class FieldRead(BaseModel):
     created_at: datetime
     updated_at: datetime
 
+
+# ─────────────────────────────────────────────
+# FruitType Schemas
+# ─────────────────────────────────────────────
+
+class FruitTypeCreate(BaseModel):
+    name: str
+    notes: str | None = None
+
+
+class FruitTypeUpdate(BaseModel):
+    name: str | None = None
+    notes: str | None = None
+
+
+class FruitTypeRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: UUID
+    name: str
+    notes: str | None
+    created_at: datetime
+    updated_at: datetime
+
+

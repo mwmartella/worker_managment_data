@@ -539,6 +539,14 @@ class FieldsTab(ttk.Frame):
                     (field["created_at"] or "")[:16],
                     (field["updated_at"] or "")[:16],
                 ))
+        except RuntimeError as e:
+            messagebox.showerror(
+                "API Error",
+                f"Could not load fields.\n\n{e}\n\n"
+                "Make sure the API server has been restarted with the latest code "
+                "and that 'alembic upgrade head' has been run on the server.",
+                parent=_top(self),
+            )
         except Exception as e:
             messagebox.showerror("Error", str(e), parent=_top(self))
 

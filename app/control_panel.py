@@ -178,6 +178,12 @@ class ControlPanel(tk.Tk):
                 "command":     self._open_field_management,
             },
             {
+                "icon":        "🍇",
+                "title":       "Planting Material Manager",
+                "description": "Manage fruit types and planting material.",
+                "command":     self._open_planting_material,
+            },
+            {
                 "icon":        "👷",
                 "title":       "Worker Management",
                 "description": "Manage workers, worker codes and shift times.",
@@ -246,3 +252,8 @@ class ControlPanel(tk.Tk):
     def _open_field_management(self):
         from app.field_gui import FieldManagementWindow
         FieldManagementWindow(self)
+
+    def _open_planting_material(self):
+        from app.planting_gui import PlantingMaterialWindow
+        PlantingMaterialWindow(self)
+

@@ -207,3 +207,30 @@ def delete_field(field_id: str) -> None:
     resp.raise_for_status()
 
 
+# ─────────────────────────────────────────────
+# Fruit Types
+# ─────────────────────────────────────────────
+
+def get_fruit_types() -> list[dict]:
+    return _handle(requests.get(f"{BASE_URL}/fruit-types/"))
+
+
+def create_fruit_type(name: str, notes: str | None) -> dict:
+    return _handle(requests.post(f"{BASE_URL}/fruit-types/", json={
+        "name": name,
+        "notes": notes or None,
+    }))
+
+
+def update_fruit_type(fruit_type_id: str, name: str, notes: str | None) -> dict:
+    return _handle(requests.patch(f"{BASE_URL}/fruit-types/{fruit_type_id}", json={
+        "name": name,
+        "notes": notes or None,
+    }))
+
+
+def delete_fruit_type(fruit_type_id: str) -> None:
+    resp = requests.delete(f"{BASE_URL}/fruit-types/{fruit_type_id}")
+    resp.raise_for_status()
+
+
