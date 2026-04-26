@@ -172,6 +172,12 @@ class ControlPanel(tk.Tk):
                 "command":     self._open_org_management,
             },
             {
+                "icon":        "🌾",
+                "title":       "Field Management",
+                "description": "Manage farm fields, areas and site assignments.",
+                "command":     self._open_field_management,
+            },
+            {
                 "icon":        "👷",
                 "title":       "Worker Management",
                 "description": "Manage workers, worker codes and shift times.",
@@ -237,3 +243,6 @@ class ControlPanel(tk.Tk):
         from app.org_gui import OrgManagementWindow
         OrgManagementWindow(self)
 
+    def _open_field_management(self):
+        from app.field_gui import FieldManagementWindow
+        FieldManagementWindow(self)

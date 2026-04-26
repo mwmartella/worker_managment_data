@@ -87,6 +87,34 @@ class Business(Base):
     )
 
 
+class Field(Base):
+    __tablename__ = "fields"
+
+    id: Mapped[uuid.UUID] = mapped_column(
+        Uuid(as_uuid=True), primary_key=True, default=uuid.uuid4
+    )
+
+    name: Mapped[str] = mapped_column(String, nullable=False)
+
+    code: Mapped[str | None] = mapped_column(String, unique=True, nullable=True)
+
+    site_id: Mapped[uuid.UUID | None] = mapped_column(
+        Uuid(as_uuid=True), ForeignKey("sites.id"), nullable=True
+    )
+
+    gross_area_ha: Mapped[Decimal | None] = mapped_column(Numeric(8, 3), nullable=True)
+
+    notes: Mapped[str | None] = mapped_column(String, nullable=True)
+
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False
+    )
+
+
 class Site(Base):
     __tablename__ = "sites"
 

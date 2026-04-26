@@ -445,6 +445,176 @@ class SitesTab(ttk.Frame):
 
 
 # ─────────────────────────────────────────────
+# Fields Tab
+# ─────────────────────────────────────────────
+
+class FieldsTab(ttk.Frame):
+    def __init__(self, parent):
+        super().__init__(parent)
+        self._site_map = {}
+        self._build_form()
+        self._build_controls()
+        self._build_tree()
+        self.refresh()
+
+    def _build_form(self):
+        form = ttk.LabelFrame(self, text="  New Field")
+        form.pack(fill="x", padx=10, pady=(12, 0))
+
+        f = ttk.Frame(form)
+        f.pack(side="left", padx=10, pady=10)
+
+        # Row 0
+        ttk.Label(f, text="Name:").grid(row=0, column=0, sticky="e", padx=6, pady=4)
+        self.name_entry = ttk.Entry(f, width=22)
+        self.name_entry.grid(row=0, column=1, sticky="w", padx=6, pady=4)
+
+        ttk.Label(f, text="Code (optional):").grid(row=0, column=2, sticky="e", padx=6, pady=4)
+        self.code_entry = ttk.Entry(f, width=14)
+        self.code_entry.grid(row=0, column=3, sticky="w", padx=6, pady=4)
+
+        ttk.Label(f, text="Gross Area (ha):").grid(row=0, column=4, sticky="e", padx=6, pady=4)
+        self.area_entry = ttk.Entry(f, width=12)
+        self.area_entry.grid(row=0, column=5, sticky="w", padx=6, pady=4)
+
+        # Row 1
+        ttk.Label(f, text="Site:").grid(row=1, column=0, sticky="e", padx=6, pady=4)
+        self.site_var = tk.StringVar()
+        self.site_cb = ttk.Combobox(f, textvariable=self.site_var,
+                                    state="readonly", width=26)
+        self.site_cb.grid(row=1, column=1, columnspan=2, sticky="w", padx=6, pady=4)
+        ttk.Button(f, text="⟳", width=3,
+                   command=self._load_sites).grid(row=1, column=3, padx=2)
+
+        ttk.Label(f, text="Notes (optional):").grid(row=1, column=4, sticky="e", padx=6, pady=4)
+        self.notes_entry = ttk.Entry(f, width=28)
+        self.notes_entry.grid(row=1, column=5, sticky="w", padx=6, pady=4)
+
+        ttk.Button(f, text="Save", command=self._save).grid(row=1, column=6, padx=12)
+
+        self._load_sites()
+
+    def _load_sites(self):
+        self._site_map.clear()
+        self._site_map["— None —"] = None
+        try:
+            for s in api.get_sites():
+                label = f"{s['name']} ({s['id'][:8]}…)"
+                self._site_map[label] = s["id"]
+        except Exception as e:
+            messagebox.showerror("Error loading sites", str(e), parent=_top(self))
+        self.site_cb["values"] = list(self._site_map.keys())
+        self.site_cb.current(0)
+
+    def _build_controls(self):
+        bar = ttk.Frame(self)
+        bar.pack(fill="x", padx=10, pady=(8, 0))
+        ttk.Button(bar, text="⟳  Refresh",      command=self.refresh).pack(side="left", padx=(0, 6))
+        ttk.Button(bar, text="✎  Edit Selected", command=self._edit).pack(side="left", padx=(0, 6))
+        ttk.Button(bar, text="🗑  Delete Record", command=self._delete).pack(side="left")
+
+    def _build_tree(self):
+        cols = ["id", "name", "code", "site", "gross_area_ha", "notes",
+                "created_at", "updated_at"]
+        self.tree = build_tree(self, cols,
+                               {"id": 90, "name": 160, "code": 100, "site": 160,
+                                "gross_area_ha": 110, "notes": 200,
+                                "created_at": 150, "updated_at": 150})
+
+    def refresh(self):
+        self._load_sites()
+        for row in self.tree.get_children():
+            self.tree.delete(row)
+        try:
+            site_lookup = {s["id"]: s["name"] for s in api.get_sites()}
+            for field in api.get_fields():
+                site_name = site_lookup.get(field.get("site_id"), "") if field.get("site_id") else ""
+                self.tree.insert("", "end", iid=field["id"], values=(
+                    field["id"][:8] + "…",
+                    field["name"],
+                    field["code"] or "",
+                    site_name,
+                    field["gross_area_ha"] if field["gross_area_ha"] is not None else "",
+                    field["notes"] or "",
+                    (field["created_at"] or "")[:16],
+                    (field["updated_at"] or "")[:16],
+                ))
+        except Exception as e:
+            messagebox.showerror("Error", str(e), parent=_top(self))
+
+    def _save(self):
+        name  = self.name_entry.get().strip()
+        code  = self.code_entry.get().strip() or None
+        area  = self.area_entry.get().strip() or None
+        notes = self.notes_entry.get().strip() or None
+        site_id = self._site_map.get(self.site_var.get())
+
+        if not name:
+            messagebox.showerror("Validation", "Name is required.", parent=_top(self))
+            return
+        if area:
+            try:
+                float(area)
+            except ValueError:
+                messagebox.showerror("Validation", "Gross Area must be a number.", parent=_top(self))
+                return
+        try:
+            api.create_field(name, code, site_id, area, notes)
+            for w in (self.name_entry, self.code_entry, self.area_entry, self.notes_entry):
+                w.delete(0, tk.END)
+            self.refresh()
+        except Exception as e:
+            messagebox.showerror("Error", str(e), parent=_top(self))
+
+    def _selected_id(self):
+        sel = self.tree.selection()
+        if not sel:
+            messagebox.showwarning("Select a row", "Please select a record first.", parent=_top(self))
+            return None
+        return sel[0]
+
+    def _edit(self):
+        iid = self._selected_id()
+        if not iid:
+            return
+        row = next((f for f in api.get_fields() if f["id"] == iid), None)
+        if not row:
+            return
+        dlg = EditDialog(_top(self), "Edit Field", {
+            "Name":            row["name"],
+            "Code":            row["code"] or "",
+            "Gross Area (ha)": str(row["gross_area_ha"]) if row["gross_area_ha"] is not None else "",
+            "Notes":           row["notes"] or "",
+        })
+        if dlg.result is None:
+            return
+        try:
+            api.update_field(
+                iid,
+                dlg.result["Name"],
+                dlg.result["Code"] or None,
+                dlg.result["Gross Area (ha)"] or None,
+                dlg.result["Notes"] or None,
+            )
+            self.refresh()
+        except Exception as e:
+            messagebox.showerror("Error", str(e), parent=_top(self))
+
+    def _delete(self):
+        iid = self._selected_id()
+        if not iid:
+            return
+        if not messagebox.askyesno("Confirm Delete",
+                                   "Permanently delete this field?", parent=_top(self)):
+            return
+        try:
+            api.delete_field(iid)
+            self.refresh()
+        except Exception as e:
+            messagebox.showerror("Error", str(e), parent=_top(self))
+
+
+# ─────────────────────────────────────────────
 # Organisation Management window
 # ─────────────────────────────────────────────
 
@@ -454,9 +624,11 @@ def _build_notebook(window: tk.Misc):
 
     businesses_tab = BusinessesTab(notebook)
     sites_tab      = SitesTab(notebook)
+    fields_tab     = FieldsTab(notebook)
 
     notebook.add(businesses_tab, text="  Businesses  ")
     notebook.add(sites_tab,      text="  Sites  ")
+    notebook.add(fields_tab,     text="  Fields  ")
 
     return notebook
 

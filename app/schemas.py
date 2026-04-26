@@ -167,3 +167,38 @@ class SiteRead(BaseModel):
     updated_at: datetime
 
 
+# ─────────────────────────────────────────────
+# Field Schemas
+# ─────────────────────────────────────────────
+
+class FieldCreate(BaseModel):
+    """Fields required to create a new Field.
+    created_at / updated_at are set automatically by the database."""
+    name: str
+    code: str | None = None
+    site_id: UUID | None = None
+    gross_area_ha: Decimal | None = None
+    notes: str | None = None
+
+
+class FieldUpdate(BaseModel):
+    """Only hand-typed fields are editable. Timestamps and FKs are never updatable."""
+    name: str | None = None
+    code: str | None = None
+    gross_area_ha: Decimal | None = None
+    notes: str | None = None
+
+
+class FieldRead(BaseModel):
+    """Full representation returned from the database."""
+    model_config = ConfigDict(from_attributes=True)
+
+    id: UUID
+    name: str
+    code: str | None
+    site_id: UUID | None
+    gross_area_ha: Decimal | None
+    notes: str | None
+    created_at: datetime
+    updated_at: datetime
+

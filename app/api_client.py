@@ -173,3 +173,37 @@ def delete_site(site_id: str) -> None:
     resp.raise_for_status()
 
 
+# ─────────────────────────────────────────────
+# Fields
+# ─────────────────────────────────────────────
+
+def get_fields() -> list[dict]:
+    return _handle(requests.get(f"{BASE_URL}/fields/"))
+
+
+def create_field(name: str, code: str | None, site_id: str | None,
+                 gross_area_ha: str | None, notes: str | None) -> dict:
+    return _handle(requests.post(f"{BASE_URL}/fields/", json={
+        "name": name,
+        "code": code or None,
+        "site_id": site_id or None,
+        "gross_area_ha": float(gross_area_ha) if gross_area_ha else None,
+        "notes": notes or None,
+    }))
+
+
+def update_field(field_id: str, name: str, code: str | None,
+                 gross_area_ha: str | None, notes: str | None) -> dict:
+    return _handle(requests.patch(f"{BASE_URL}/fields/{field_id}", json={
+        "name": name,
+        "code": code or None,
+        "gross_area_ha": float(gross_area_ha) if gross_area_ha else None,
+        "notes": notes or None,
+    }))
+
+
+def delete_field(field_id: str) -> None:
+    resp = requests.delete(f"{BASE_URL}/fields/{field_id}")
+    resp.raise_for_status()
+
+
