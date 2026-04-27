@@ -201,30 +201,85 @@ class BlockRowsTab(ttk.Frame):
         row = next((r for r in api.get_block_rows() if r["id"] == iid), None)
         if not row:
             return
-        dlg = EditDialog(_top(self), "Edit Block Row", {
-            "Row #":          str(row["row_number"]),
-            "Side (N/S/E/W)": row["side"] or "",
-            "Row Length (m)": str(row["row_length_m"] or ""),
-            "Row Width (m)":  str(row["row_width_m"] or ""),
-            "Notes":          row["notes"] or "",
-        })
-        if dlg.result is None:
+
+        result = {}
+
+        dlg = tk.Toplevel(_top(self))
+        dlg.title("Edit Block Row")
+        dlg.resizable(False, False)
+        dlg.grab_set()
+
+        inner = ttk.Frame(dlg)
+        inner.pack(padx=20, pady=16)
+
+        def _lbl(text, r):
+            ttk.Label(inner, text=text + ":").grid(row=r, column=0, sticky="e", padx=10, pady=6)
+
+        # Block dropdown
+        _lbl("Block", 0)
+        block_var = tk.StringVar(value=next((k for k, v in self._block_map.items()
+                                             if v == row["block_id"]), ""))
+        ttk.Combobox(inner, textvariable=block_var, values=list(self._block_map.keys()),
+                     state="readonly", width=30).grid(row=0, column=1, sticky="w", padx=10, pady=6)
+
+        # Row number
+        _lbl("Row #", 1)
+        rn_var = tk.StringVar(value=str(row["row_number"]))
+        ttk.Entry(inner, textvariable=rn_var, width=8).grid(row=1, column=1, sticky="w", padx=10, pady=6)
+
+        # Side dropdown
+        _lbl("Side", 2)
+        side_var = tk.StringVar(value=row["side"] or "")
+        ttk.Combobox(inner, textvariable=side_var, values=[""] + SIDES,
+                     state="readonly", width=8).grid(row=2, column=1, sticky="w", padx=10, pady=6)
+
+        # Row length
+        _lbl("Row Length (m)", 3)
+        rl_var = tk.StringVar(value=str(row["row_length_m"] or ""))
+        ttk.Entry(inner, textvariable=rl_var, width=12).grid(row=3, column=1, sticky="w", padx=10, pady=6)
+
+        # Row width
+        _lbl("Row Width (m)", 4)
+        rw_var = tk.StringVar(value=str(row["row_width_m"] or ""))
+        ttk.Entry(inner, textvariable=rw_var, width=12).grid(row=4, column=1, sticky="w", padx=10, pady=6)
+
+        # Notes
+        _lbl("Notes", 5)
+        notes_var = tk.StringVar(value=row["notes"] or "")
+        ttk.Entry(inner, textvariable=notes_var, width=36).grid(row=5, column=1, sticky="w", padx=10, pady=6)
+
+        def _save():
+            side = side_var.get() or None
+            if side is not None and side not in SIDES:
+                messagebox.showerror("Validation", "Side must be N, S, E, W or blank.", parent=dlg)
+                return
+            try:
+                rn = int(rn_var.get().strip())
+            except ValueError:
+                messagebox.showerror("Validation", "Row # must be an integer.", parent=dlg)
+                return
+            block_id = self._block_map.get(block_var.get())
+            payload = {k: v for k, v in {
+                "block_id":     str(block_id) if block_id else None,
+                "row_number":   rn,
+                "side":         side,
+                "row_length_m": rl_var.get().strip() or None,
+                "row_width_m":  rw_var.get().strip() or None,
+                "notes":        notes_var.get().strip() or None,
+            }.items() if v is not None}
+            result["payload"] = payload
+            dlg.destroy()
+
+        btn = ttk.Frame(inner)
+        btn.grid(row=6, column=0, columnspan=2, pady=12)
+        ttk.Button(btn, text="Save",   command=_save).pack(side="left", padx=6)
+        ttk.Button(btn, text="Cancel", command=dlg.destroy).pack(side="left", padx=6)
+
+        dlg.wait_window()
+        if not result.get("payload"):
             return
-        side = dlg.result["Side (N/S/E/W)"].strip().upper() or None
-        if side is not None and side not in SIDES:
-            messagebox.showerror("Validation", "Side must be N, S, E, W or blank.", parent=_top(self))
-            return
-        def _oi(k): v = dlg.result[k].strip(); return int(v) if v else None
-        def _od(k): v = dlg.result[k].strip(); return v if v else None
-        payload = {k: v for k, v in {
-            "row_number":   _oi("Row #"),
-            "side":         side,
-            "row_length_m": _od("Row Length (m)"),
-            "row_width_m":  _od("Row Width (m)"),
-            "notes":        dlg.result["Notes"] or None,
-        }.items() if v is not None}
         try:
-            api.update_block_row(iid, payload)
+            api.update_block_row(iid, result["payload"])
             self.refresh()
         except Exception as e:
             messagebox.showerror("Error", str(e), parent=_top(self))
@@ -477,30 +532,107 @@ class RowPortionsTab(ttk.Frame):
         p = next((x for x in api.get_row_portions() if x["id"] == iid), None)
         if not p:
             return
-        dlg = EditDialog(_top(self), "Edit Row Portion", {
-            "Label":          p["portion_label"] or "",
-            "Seq #":          str(p["sequence_no"] or ""),
-            "Planting Year":  str(p["planting_year"] or ""),
-            "Tree Count":     str(p["tree_count"] or ""),
-            "Length (m)":     str(p["length_m"] or ""),
-            "Area (m\u00b2)": str(p["area_m2"] or ""),
-            "Notes":          p["notes"] or "",
-        })
-        if dlg.result is None:
+
+        result = {}
+        row_lkp = {v: k for k, v in self._row_map.items()}
+        var_lkp = {v: k for k, v in self._variety_map.items()}
+        cln_lkp = {v: k for k, v in self._clone_map.items()}
+        rs_lkp  = {v: k for k, v in self._rootstock_map.items() if v is not None}
+
+        dlg = tk.Toplevel(_top(self))
+        dlg.title("Edit Row Portion")
+        dlg.resizable(False, False)
+        dlg.grab_set()
+
+        inner = ttk.Frame(dlg)
+        inner.pack(padx=20, pady=16)
+
+        def _lbl(text, r):
+            ttk.Label(inner, text=text + ":").grid(row=r, column=0, sticky="e", padx=10, pady=5)
+
+        # Row (FK)
+        _lbl("Row", 0)
+        row_var = tk.StringVar(value=row_lkp.get(p["row_id"], ""))
+        ttk.Combobox(inner, textvariable=row_var, values=list(self._row_map.keys()),
+                     state="readonly", width=34).grid(row=0, column=1, sticky="w", padx=10, pady=5)
+
+        # Variety (FK)
+        _lbl("Variety", 1)
+        var_var = tk.StringVar(value=var_lkp.get(p["variety_id"], ""))
+        ttk.Combobox(inner, textvariable=var_var, values=list(self._variety_map.keys()),
+                     state="readonly", width=34).grid(row=1, column=1, sticky="w", padx=10, pady=5)
+
+        # Clone (FK, nullable)
+        _lbl("Clone", 2)
+        cln_var = tk.StringVar(value=cln_lkp.get(p["clone_id"], "") if p["clone_id"] else "")
+        ttk.Combobox(inner, textvariable=cln_var,
+                     values=[""] + list(self._clone_map.keys()),
+                     state="readonly", width=34).grid(row=2, column=1, sticky="w", padx=10, pady=5)
+
+        # Rootstock (FK, nullable)
+        _lbl("Rootstock", 3)
+        rs_var = tk.StringVar(value=rs_lkp.get(p["rootstock_id"], "") if p["rootstock_id"] else "\u2014 None \u2014")
+        ttk.Combobox(inner, textvariable=rs_var,
+                     values=list(self._rootstock_map.keys()),
+                     state="readonly", width=34).grid(row=3, column=1, sticky="w", padx=10, pady=5)
+
+        # Plain text fields
+        def _entry(label, row_idx, current):
+            _lbl(label, row_idx)
+            v = tk.StringVar(value=str(current) if current is not None else "")
+            ttk.Entry(inner, textvariable=v, width=20).grid(row=row_idx, column=1, sticky="w", padx=10, pady=5)
+            return v
+
+        lbl_var   = _entry("Label",         4, p["portion_label"])
+        seq_var   = _entry("Seq #",         5, p["sequence_no"])
+        year_var  = _entry("Planting Year", 6, p["planting_year"])
+        tc_var    = _entry("Tree Count",    7, p["tree_count"])
+        len_var   = _entry("Length (m)",    8, p["length_m"])
+        area_var  = _entry("Area (m²)",     9, p["area_m2"])
+        notes_var = _entry("Notes",        10, p["notes"])
+
+        def _save():
+            row_id      = self._row_map.get(row_var.get())
+            variety_id  = self._variety_map.get(var_var.get())
+            clone_id    = self._clone_map.get(cln_var.get()) if cln_var.get() else None
+            rootstock_id = self._rootstock_map.get(rs_var.get())
+
+            if not row_id:
+                messagebox.showerror("Validation", "Please select a Row.", parent=dlg)
+                return
+            if not variety_id:
+                messagebox.showerror("Validation", "Please select a Variety.", parent=dlg)
+                return
+
+            def _oi(v): s = v.get().strip(); return int(s) if s else None
+            def _od(v): s = v.get().strip(); return s if s else None
+
+            payload = {k: val for k, val in {
+                "row_id":        str(row_id),
+                "variety_id":    str(variety_id),
+                "clone_id":      str(clone_id) if clone_id else None,
+                "rootstock_id":  str(rootstock_id) if rootstock_id else None,
+                "portion_label": _od(lbl_var),
+                "sequence_no":   _oi(seq_var),
+                "planting_year": _oi(year_var),
+                "tree_count":    _oi(tc_var),
+                "length_m":      _od(len_var),
+                "area_m2":       _od(area_var),
+                "notes":         _od(notes_var),
+            }.items() if val is not None}
+            result["payload"] = payload
+            dlg.destroy()
+
+        btn = ttk.Frame(inner)
+        btn.grid(row=11, column=0, columnspan=2, pady=12)
+        ttk.Button(btn, text="Save",   command=_save).pack(side="left", padx=6)
+        ttk.Button(btn, text="Cancel", command=dlg.destroy).pack(side="left", padx=6)
+
+        dlg.wait_window()
+        if not result.get("payload"):
             return
-        def _oi(k): v = dlg.result[k].strip(); return int(v) if v else None
-        def _od(k): v = dlg.result[k].strip(); return v if v else None
-        payload = {k: v for k, v in {
-            "portion_label": dlg.result["Label"] or None,
-            "sequence_no":   _oi("Seq #"),
-            "planting_year": _oi("Planting Year"),
-            "tree_count":    _oi("Tree Count"),
-            "length_m":      _od("Length (m)"),
-            "area_m2":       _od("Area (m\u00b2)"),
-            "notes":         dlg.result["Notes"] or None,
-        }.items() if v is not None}
         try:
-            api.update_row_portion(iid, payload)
+            api.update_row_portion(iid, result["payload"])
             self.refresh()
         except Exception as e:
             messagebox.showerror("Error", str(e), parent=_top(self))
