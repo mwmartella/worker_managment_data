@@ -258,4 +258,5 @@ class PlantingMaterialWindow(tk.Toplevel):
         notebook = ttk.Notebook(self)
         notebook.pack(fill="both", expand=True, padx=10, pady=10)
         notebook.add(FruitTypesTab(notebook), text="  Fruit Types  ")
+        notebook.add(VarietiesTab(notebook),  text="  Varieties  ")
         self.grab_set()
