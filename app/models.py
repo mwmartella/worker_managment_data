@@ -1,5 +1,5 @@
 from sqlalchemy.orm import Mapped, mapped_column
-from sqlalchemy import String, Date, Uuid, Numeric, DateTime, ForeignKey, Time, func, text, UniqueConstraint
+from sqlalchemy import String, Date, Uuid, Numeric, DateTime, ForeignKey, Time, func, text, UniqueConstraint, Integer
 from app.db import Base
 from datetime import date, datetime, time
 from decimal import Decimal
@@ -147,6 +147,57 @@ class Block(Base):
     code: Mapped[str | None] = mapped_column(String, nullable=True)
 
     block_type: Mapped[str | None] = mapped_column(String, nullable=True)
+
+    notes: Mapped[str | None] = mapped_column(String, nullable=True)
+
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False
+    )
+
+
+class BlockRow(Base):
+    __tablename__ = "block_rows"
+    __table_args__ = (UniqueConstraint("block_id", "row_number", "side"),)
+
+    id: Mapped[uuid.UUID] = mapped_column(
+        Uuid(as_uuid=True), primary_key=True, default=uuid.uuid4
+    )
+
+    block_id: Mapped[uuid.UUID] = mapped_column(
+        Uuid(as_uuid=True), ForeignKey("blocks.id"), nullable=False
+    )
+
+    row_number: Mapped[int] = mapped_column(Integer, nullable=False)
+
+    side: Mapped[str] = mapped_column(String(1), nullable=False)
+
+    variety_id: Mapped[uuid.UUID] = mapped_column(
+        Uuid(as_uuid=True), ForeignKey("varieties.id"), nullable=False
+    )
+
+    clone_id: Mapped[uuid.UUID] = mapped_column(
+        Uuid(as_uuid=True), ForeignKey("variety_clones.id"), nullable=False
+    )
+
+    rootstock_id: Mapped[uuid.UUID | None] = mapped_column(
+        Uuid(as_uuid=True), ForeignKey("rootstocks.id"), nullable=True
+    )
+
+    planting_year: Mapped[int | None] = mapped_column(Integer, nullable=True)
+
+    row_width_m: Mapped[Decimal | None] = mapped_column(Numeric(6, 2), nullable=True)
+
+    tree_spacing_m: Mapped[Decimal | None] = mapped_column(Numeric(6, 2), nullable=True)
+
+    tree_count: Mapped[int | None] = mapped_column(Integer, nullable=True)
+
+    row_length_m: Mapped[Decimal | None] = mapped_column(Numeric(8, 2), nullable=True)
+
+    area_m2: Mapped[Decimal | None] = mapped_column(Numeric(10, 2), nullable=True)
 
     notes: Mapped[str | None] = mapped_column(String, nullable=True)
 

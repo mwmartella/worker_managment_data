@@ -354,3 +354,26 @@ def delete_rootstock(rootstock_id: str) -> None:
     resp.raise_for_status()
 
 
+# ─────────────────────────────────────────────
+# Block Rows
+# ─────────────────────────────────────────────
+
+def get_block_rows(block_id: str | None = None) -> list[dict]:
+    params = {"block_id": block_id} if block_id else {}
+    return _handle(requests.get(f"{BASE_URL}/block-rows/", params=params))
+
+
+def create_block_row(payload: dict) -> dict:
+    return _handle(requests.post(f"{BASE_URL}/block-rows/", json=payload))
+
+
+def update_block_row(row_id: str, payload: dict) -> dict:
+    return _handle(requests.patch(f"{BASE_URL}/block-rows/{row_id}", json=payload))
+
+
+def delete_block_row(row_id: str) -> None:
+    resp = requests.delete(f"{BASE_URL}/block-rows/{row_id}")
+    resp.raise_for_status()
+
+
+
