@@ -407,4 +407,168 @@ class PlantingMaterialWindow(tk.Toplevel):
         notebook.add(FruitTypesTab(notebook),    text="  Fruit Types  ")
         notebook.add(VarietiesTab(notebook),     text="  Varieties  ")
         notebook.add(VarietyClonesTab(notebook), text="  Variety Clones  ")
+        notebook.add(BlocksTab(notebook),        text="  Blocks  ")
         self.grab_set()
+
+
+class BlocksTab(ttk.Frame):
+    def __init__(self, parent):
+        super().__init__(parent)
+        self._field_map = {}   # label -> field_id
+        self._build_form()
+        self._build_controls()
+        self._build_tree()
+        self.refresh()
+
+    def _build_form(self):
+        form = ttk.LabelFrame(self, text="  New Block")
+        form.pack(fill="x", padx=10, pady=(12, 0))
+        f = ttk.Frame(form)
+        f.pack(side="left", padx=10, pady=10)
+
+        ttk.Label(f, text="Name:").grid(row=0, column=0, sticky="e", padx=6, pady=4)
+        self.name_entry = ttk.Entry(f, width=22)
+        self.name_entry.grid(row=0, column=1, sticky="w", padx=6, pady=4)
+
+        ttk.Label(f, text="Field:").grid(row=0, column=2, sticky="e", padx=6, pady=4)
+        self.field_var = tk.StringVar()
+        self.field_cb = ttk.Combobox(f, textvariable=self.field_var,
+                                     state="readonly", width=22)
+        self.field_cb.grid(row=0, column=3, sticky="w", padx=6, pady=4)
+        ttk.Button(f, text="\u27f3", width=3,
+                   command=self._load_fields).grid(row=0, column=4, padx=2)
+
+        ttk.Label(f, text="Code:").grid(row=0, column=5, sticky="e", padx=6, pady=4)
+        self.code_entry = ttk.Entry(f, width=14)
+        self.code_entry.grid(row=0, column=6, sticky="w", padx=6, pady=4)
+
+        ttk.Label(f, text="Type:").grid(row=0, column=7, sticky="e", padx=6, pady=4)
+        self.type_entry = ttk.Entry(f, width=14)
+        self.type_entry.grid(row=0, column=8, sticky="w", padx=6, pady=4)
+
+        ttk.Label(f, text="Notes:").grid(row=0, column=9, sticky="e", padx=6, pady=4)
+        self.notes_entry = ttk.Entry(f, width=22)
+        self.notes_entry.grid(row=0, column=10, sticky="w", padx=6, pady=4)
+
+        ttk.Button(f, text="Save", command=self._save).grid(row=0, column=11, padx=12)
+
+        self._load_fields()
+
+    def _load_fields(self):
+        self._field_map.clear()
+        try:
+            for field in api.get_fields():
+                self._field_map[field["name"]] = field["id"]
+        except Exception as e:
+            messagebox.showerror("Error loading fields", str(e), parent=_top(self))
+        self.field_cb["values"] = list(self._field_map.keys())
+        if self._field_map:
+            self.field_cb.current(0)
+
+    def _build_controls(self):
+        bar = ttk.Frame(self)
+        bar.pack(fill="x", padx=10, pady=(8, 0))
+        ttk.Button(bar, text="\u27f3  Refresh",        command=self.refresh).pack(side="left", padx=(0, 6))
+        ttk.Button(bar, text="\u270e  Edit Selected",   command=self._edit).pack(side="left", padx=(0, 6))
+        ttk.Button(bar, text="\U0001f5d1  Delete Record", command=self._delete).pack(side="left")
+
+    def _build_tree(self):
+        cols = ["id", "name", "field", "code", "block_type", "notes", "created_at", "updated_at"]
+        self.tree = build_tree(self, cols,
+                               {"id": 90, "name": 160, "field": 160, "code": 90,
+                                "block_type": 110, "notes": 200,
+                                "created_at": 140, "updated_at": 140})
+
+    def refresh(self):
+        self._load_fields()
+        for row in self.tree.get_children():
+            self.tree.delete(row)
+        try:
+            field_lookup = {v: k for k, v in self._field_map.items()}
+            for b in api.get_blocks():
+                self.tree.insert("", "end", iid=b["id"], values=(
+                    b["id"][:8] + "\u2026",
+                    b["name"],
+                    field_lookup.get(b["field_id"], "Unknown"),
+                    b["code"] or "",
+                    b["block_type"] or "",
+                    b["notes"] or "",
+                    (b["created_at"] or "")[:16],
+                    (b["updated_at"] or "")[:16],
+                ))
+        except RuntimeError as e:
+            messagebox.showerror("API Error",
+                f"Could not load blocks.\n\n{e}\n\n"
+                "Make sure the API server has been restarted and "
+                "'alembic upgrade head' has been run.",
+                parent=_top(self))
+        except Exception as e:
+            messagebox.showerror("Error", str(e), parent=_top(self))
+
+    def _save(self):
+        name      = self.name_entry.get().strip()
+        field_id  = self._field_map.get(self.field_var.get())
+        code      = self.code_entry.get().strip() or None
+        block_type = self.type_entry.get().strip() or None
+        notes     = self.notes_entry.get().strip() or None
+        if not name:
+            messagebox.showerror("Validation", "Name is required.", parent=_top(self))
+            return
+        if not field_id:
+            messagebox.showerror("Validation", "Please select a Field.", parent=_top(self))
+            return
+        try:
+            api.create_block(field_id, name, code, block_type, notes)
+            for entry in (self.name_entry, self.code_entry, self.type_entry, self.notes_entry):
+                entry.delete(0, tk.END)
+            self.refresh()
+        except Exception as e:
+            messagebox.showerror("Error", str(e), parent=_top(self))
+
+    def _selected_id(self):
+        sel = self.tree.selection()
+        if not sel:
+            messagebox.showwarning("Select a row", "Please select a record first.", parent=_top(self))
+            return None
+        return sel[0]
+
+    def _edit(self):
+        iid = self._selected_id()
+        if not iid:
+            return
+        row = next((b for b in api.get_blocks() if b["id"] == iid), None)
+        if not row:
+            return
+        dlg = EditDialog(_top(self), "Edit Block", {
+            "Name":       row["name"],
+            "Code":       row["code"] or "",
+            "Block Type": row["block_type"] or "",
+            "Notes":      row["notes"] or "",
+        })
+        if dlg.result is None:
+            return
+        try:
+            api.update_block(
+                iid,
+                dlg.result["Name"],
+                dlg.result["Code"] or None,
+                dlg.result["Block Type"] or None,
+                dlg.result["Notes"] or None,
+            )
+            self.refresh()
+        except Exception as e:
+            messagebox.showerror("Error", str(e), parent=_top(self))
+
+    def _delete(self):
+        iid = self._selected_id()
+        if not iid:
+            return
+        if not messagebox.askyesno("Confirm Delete",
+                                   "Permanently delete this block?", parent=_top(self)):
+            return
+        try:
+            api.delete_block(iid)
+            self.refresh()
+        except Exception as e:
+            messagebox.showerror("Error", str(e), parent=_top(self))
+

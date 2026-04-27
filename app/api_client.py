@@ -288,3 +288,37 @@ def delete_variety_clone(clone_id: str) -> None:
     resp.raise_for_status()
 
 
+# ─────────────────────────────────────────────
+# Blocks
+# ─────────────────────────────────────────────
+
+def get_blocks() -> list[dict]:
+    return _handle(requests.get(f"{BASE_URL}/blocks/"))
+
+
+def create_block(field_id: str, name: str, code: str | None,
+                 block_type: str | None, notes: str | None) -> dict:
+    return _handle(requests.post(f"{BASE_URL}/blocks/", json={
+        "field_id": field_id,
+        "name": name,
+        "code": code or None,
+        "block_type": block_type or None,
+        "notes": notes or None,
+    }))
+
+
+def update_block(block_id: str, name: str, code: str | None,
+                 block_type: str | None, notes: str | None) -> dict:
+    return _handle(requests.patch(f"{BASE_URL}/blocks/{block_id}", json={
+        "name": name,
+        "code": code or None,
+        "block_type": block_type or None,
+        "notes": notes or None,
+    }))
+
+
+def delete_block(block_id: str) -> None:
+    resp = requests.delete(f"{BASE_URL}/blocks/{block_id}")
+    resp.raise_for_status()
+
+

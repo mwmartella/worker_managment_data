@@ -251,6 +251,37 @@ class VarietyRead(BaseModel):
 
 
 # ─────────────────────────────────────────────
+# Block Schemas
+# ─────────────────────────────────────────────
+
+class BlockCreate(BaseModel):
+    field_id: UUID
+    name: str
+    code: str | None = None
+    block_type: str | None = None
+    notes: str | None = None
+
+
+class BlockUpdate(BaseModel):
+    name: str | None = None
+    code: str | None = None
+    block_type: str | None = None
+    notes: str | None = None
+
+
+class BlockRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: UUID
+    field_id: UUID
+    name: str
+    code: str | None
+    block_type: str | None
+    notes: str | None
+    created_at: datetime
+    updated_at: datetime
+
+
 # VarietyClone Schemas
 # ─────────────────────────────────────────────
 

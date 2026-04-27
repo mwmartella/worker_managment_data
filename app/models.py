@@ -130,6 +130,35 @@ class Variety(Base):
     )
 
 
+class Block(Base):
+    __tablename__ = "blocks"
+    __table_args__ = (UniqueConstraint("field_id", "name"),)
+
+    id: Mapped[uuid.UUID] = mapped_column(
+        Uuid(as_uuid=True), primary_key=True, default=uuid.uuid4
+    )
+
+    field_id: Mapped[uuid.UUID] = mapped_column(
+        Uuid(as_uuid=True), ForeignKey("fields.id"), nullable=False
+    )
+
+    name: Mapped[str] = mapped_column(String, nullable=False)
+
+    code: Mapped[str | None] = mapped_column(String, nullable=True)
+
+    block_type: Mapped[str | None] = mapped_column(String, nullable=True)
+
+    notes: Mapped[str | None] = mapped_column(String, nullable=True)
+
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False
+    )
+
+
 class VarietyClone(Base):
     __tablename__ = "variety_clones"
     __table_args__ = (UniqueConstraint("name", "variety_id"),)
