@@ -344,6 +344,7 @@ class BlockRowCreate(BaseModel):
     side: str | None = None
     variety_id: UUID
     clone_id: UUID | None = None
+    rootstock_id: UUID | None = None
     planting_year: int | None = None
     row_width_m: Decimal | None = None
     tree_spacing_m: Decimal | None = None
