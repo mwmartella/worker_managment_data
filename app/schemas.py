@@ -250,3 +250,29 @@ class VarietyRead(BaseModel):
     updated_at: datetime
 
 
+# ─────────────────────────────────────────────
+# VarietyClone Schemas
+# ─────────────────────────────────────────────
+
+class VarietyCloneCreate(BaseModel):
+    name: str
+    variety_id: UUID
+    notes: str | None = None
+
+
+class VarietyCloneUpdate(BaseModel):
+    name: str | None = None
+    notes: str | None = None
+
+
+class VarietyCloneRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: UUID
+    name: str
+    variety_id: UUID
+    notes: str | None
+    created_at: datetime
+    updated_at: datetime
+
+

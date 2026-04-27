@@ -244,6 +244,153 @@ class VarietiesTab(ttk.Frame):
             messagebox.showerror("Error", str(e), parent=_top(self))
 
 
+
+
+# ─────────────────────────────────────────────
+# Variety Clones Tab
+# ─────────────────────────────────────────────
+
+class VarietyClonesTab(ttk.Frame):
+    def __init__(self, parent):
+        super().__init__(parent)
+        self._variety_map = {}   # label -> variety_id
+        self._build_form()
+        self._build_controls()
+        self._build_tree()
+        self.refresh()
+
+    def _build_form(self):
+        form = ttk.LabelFrame(self, text="  New Variety Clone")
+        form.pack(fill="x", padx=10, pady=(12, 0))
+        f = ttk.Frame(form)
+        f.pack(side="left", padx=10, pady=10)
+
+        ttk.Label(f, text="Name:").grid(row=0, column=0, sticky="e", padx=6, pady=4)
+        self.name_entry = ttk.Entry(f, width=28)
+        self.name_entry.grid(row=0, column=1, sticky="w", padx=6, pady=4)
+
+        ttk.Label(f, text="Variety:").grid(row=0, column=2, sticky="e", padx=6, pady=4)
+        self.variety_var = tk.StringVar()
+        self.variety_cb = ttk.Combobox(f, textvariable=self.variety_var,
+                                       state="readonly", width=26)
+        self.variety_cb.grid(row=0, column=3, sticky="w", padx=6, pady=4)
+        ttk.Button(f, text="\u27f3", width=3,
+                   command=self._load_varieties).grid(row=0, column=4, padx=2)
+
+        ttk.Label(f, text="Notes (optional):").grid(row=0, column=5, sticky="e", padx=6, pady=4)
+        self.notes_entry = ttk.Entry(f, width=28)
+        self.notes_entry.grid(row=0, column=6, sticky="w", padx=6, pady=4)
+
+        ttk.Button(f, text="Save", command=self._save).grid(row=0, column=7, padx=12)
+
+        self._load_varieties()
+
+    def _load_varieties(self):
+        self._variety_map.clear()
+        try:
+            for v in api.get_varieties():
+                self._variety_map[v["name"]] = v["id"]
+        except Exception as e:
+            messagebox.showerror("Error loading varieties", str(e), parent=_top(self))
+        self.variety_cb["values"] = list(self._variety_map.keys())
+        if self._variety_map:
+            self.variety_cb.current(0)
+
+    def _build_controls(self):
+        bar = ttk.Frame(self)
+        bar.pack(fill="x", padx=10, pady=(8, 0))
+        ttk.Button(bar, text="\u27f3  Refresh",       command=self.refresh).pack(side="left", padx=(0, 6))
+        ttk.Button(bar, text="\u270e  Edit Selected",  command=self._edit).pack(side="left", padx=(0, 6))
+        ttk.Button(bar, text="\U0001f5d1  Delete Record", command=self._delete).pack(side="left")
+
+    def _build_tree(self):
+        cols = ["id", "name", "variety", "notes", "created_at", "updated_at"]
+        self.tree = build_tree(self, cols,
+                               {"id": 90, "name": 200, "variety": 200,
+                                "notes": 220, "created_at": 150, "updated_at": 150})
+
+    def refresh(self):
+        self._load_varieties()
+        for row in self.tree.get_children():
+            self.tree.delete(row)
+        try:
+            variety_lookup = {v["id"]: v["name"] for v in api.get_varieties()}
+            for vc in api.get_variety_clones():
+                self.tree.insert("", "end", iid=vc["id"], values=(
+                    vc["id"][:8] + "\u2026",
+                    vc["name"],
+                    variety_lookup.get(vc["variety_id"], "Unknown"),
+                    vc["notes"] or "",
+                    (vc["created_at"] or "")[:16],
+                    (vc["updated_at"] or "")[:16],
+                ))
+        except RuntimeError as e:
+            messagebox.showerror("API Error",
+                f"Could not load variety clones.\n\n{e}\n\n"
+                "Make sure the API server has been restarted and "
+                "'alembic upgrade head' has been run on the server.",
+                parent=_top(self))
+        except Exception as e:
+            messagebox.showerror("Error", str(e), parent=_top(self))
+
+    def _save(self):
+        name      = self.name_entry.get().strip()
+        variety_id = self._variety_map.get(self.variety_var.get())
+        notes     = self.notes_entry.get().strip() or None
+        if not name:
+            messagebox.showerror("Validation", "Name is required.", parent=_top(self))
+            return
+        if not variety_id:
+            messagebox.showerror("Validation", "Please select a Variety.", parent=_top(self))
+            return
+        try:
+            api.create_variety_clone(name, variety_id, notes)
+            self.name_entry.delete(0, tk.END)
+            self.notes_entry.delete(0, tk.END)
+            self.refresh()
+        except Exception as e:
+            messagebox.showerror("Error", str(e), parent=_top(self))
+
+    def _selected_id(self):
+        sel = self.tree.selection()
+        if not sel:
+            messagebox.showwarning("Select a row", "Please select a record first.", parent=_top(self))
+            return None
+        return sel[0]
+
+    def _edit(self):
+        iid = self._selected_id()
+        if not iid:
+            return
+        row = next((vc for vc in api.get_variety_clones() if vc["id"] == iid), None)
+        if not row:
+            return
+        dlg = EditDialog(_top(self), "Edit Variety Clone", {
+            "Name":  row["name"],
+            "Notes": row["notes"] or "",
+        })
+        if dlg.result is None:
+            return
+        try:
+            api.update_variety_clone(iid, dlg.result["Name"], dlg.result["Notes"] or None)
+            self.refresh()
+        except Exception as e:
+            messagebox.showerror("Error", str(e), parent=_top(self))
+
+    def _delete(self):
+        iid = self._selected_id()
+        if not iid:
+            return
+        if not messagebox.askyesno("Confirm Delete",
+                                   "Permanently delete this variety clone?", parent=_top(self)):
+            return
+        try:
+            api.delete_variety_clone(iid)
+            self.refresh()
+        except Exception as e:
+            messagebox.showerror("Error", str(e), parent=_top(self))
+
+
 class PlantingMaterialWindow(tk.Toplevel):
     def __init__(self, parent):
         super().__init__(parent)
@@ -257,6 +404,7 @@ class PlantingMaterialWindow(tk.Toplevel):
                       "Santa Rita Farm  •  Manage fruit types and planting material")
         notebook = ttk.Notebook(self)
         notebook.pack(fill="both", expand=True, padx=10, pady=10)
-        notebook.add(FruitTypesTab(notebook), text="  Fruit Types  ")
-        notebook.add(VarietiesTab(notebook),  text="  Varieties  ")
+        notebook.add(FruitTypesTab(notebook),    text="  Fruit Types  ")
+        notebook.add(VarietiesTab(notebook),     text="  Varieties  ")
+        notebook.add(VarietyClonesTab(notebook), text="  Variety Clones  ")
         self.grab_set()

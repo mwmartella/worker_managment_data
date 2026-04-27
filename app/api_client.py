@@ -260,3 +260,31 @@ def delete_variety(variety_id: str) -> None:
     resp.raise_for_status()
 
 
+# ─────────────────────────────────────────────
+# Variety Clones
+# ─────────────────────────────────────────────
+
+def get_variety_clones() -> list[dict]:
+    return _handle(requests.get(f"{BASE_URL}/variety-clones/"))
+
+
+def create_variety_clone(name: str, variety_id: str, notes: str | None) -> dict:
+    return _handle(requests.post(f"{BASE_URL}/variety-clones/", json={
+        "name": name,
+        "variety_id": variety_id,
+        "notes": notes or None,
+    }))
+
+
+def update_variety_clone(clone_id: str, name: str, notes: str | None) -> dict:
+    return _handle(requests.patch(f"{BASE_URL}/variety-clones/{clone_id}", json={
+        "name": name,
+        "notes": notes or None,
+    }))
+
+
+def delete_variety_clone(clone_id: str) -> None:
+    resp = requests.delete(f"{BASE_URL}/variety-clones/{clone_id}")
+    resp.raise_for_status()
+
+

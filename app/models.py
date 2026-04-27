@@ -130,6 +130,31 @@ class Variety(Base):
     )
 
 
+class VarietyClone(Base):
+    __tablename__ = "variety_clones"
+    __table_args__ = (UniqueConstraint("name", "variety_id"),)
+
+    id: Mapped[uuid.UUID] = mapped_column(
+        Uuid(as_uuid=True), primary_key=True, default=uuid.uuid4
+    )
+
+    name: Mapped[str] = mapped_column(String, nullable=False)
+
+    variety_id: Mapped[uuid.UUID] = mapped_column(
+        Uuid(as_uuid=True), ForeignKey("varieties.id"), nullable=False
+    )
+
+    notes: Mapped[str | None] = mapped_column(String, nullable=True)
+
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False
+    )
+
+
 class Field(Base):
     __tablename__ = "fields"
 
