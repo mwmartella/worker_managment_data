@@ -33,8 +33,11 @@ class BlockRowsTab(ttk.Frame):
         self._build_filter()
         self._build_controls()
         self._build_tree()
-        self._load_lookups()
-        self.refresh()
+        try:
+            self._load_lookups()
+            self.refresh()
+        except Exception as e:
+            messagebox.showerror("Error", f"Could not load block rows on startup:\n{e}", parent=_top(self))
 
     def _build_form(self):
         form = ttk.LabelFrame(self, text="  New Block Row")
