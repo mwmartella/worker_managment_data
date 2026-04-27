@@ -30,9 +30,9 @@ def get_block_row(row_id: UUID, db: Session = Depends(get_db)):
 
 @router.post("/", response_model=BlockRowRead, status_code=status.HTTP_201_CREATED)
 def create_block_row(payload: BlockRowCreate, db: Session = Depends(get_db)):
-    if payload.side not in VALID_SIDES:
+    if payload.side is not None and payload.side not in VALID_SIDES:
         raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                            detail=f"side must be one of {sorted(VALID_SIDES)}.")
+                            detail=f"side must be one of {sorted(VALID_SIDES)} or null.")
     if not db.query(Block).filter_by(id=payload.block_id).first():
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Block not found.")
     if not db.query(Variety).filter_by(id=payload.variety_id).first():
@@ -64,9 +64,9 @@ def update_block_row(row_id: UUID, payload: BlockRowUpdate, db: Session = Depend
 
     updates = payload.model_dump(exclude_none=True)
 
-    if "side" in updates and updates["side"] not in VALID_SIDES:
+    if "side" in updates and updates["side"] is not None and updates["side"] not in VALID_SIDES:
         raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                            detail=f"side must be one of {sorted(VALID_SIDES)}.")
+                            detail=f"side must be one of {sorted(VALID_SIDES)} or null.")
 
     new_row_number = updates.get("row_number", row.row_number)
     new_side = updates.get("side", row.side)

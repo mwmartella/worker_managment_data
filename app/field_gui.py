@@ -53,9 +53,9 @@ class BlockRowsTab(ttk.Frame):
         self.row_num_entry.grid(row=0, column=3, sticky="w", padx=6, pady=3)
 
         ttk.Label(r0, text="Side:").grid(row=0, column=4, sticky="e", padx=6, pady=3)
-        self.side_var = tk.StringVar(value="N")
+        self.side_var = tk.StringVar(value="")
         self.side_cb = ttk.Combobox(r0, textvariable=self.side_var,
-                                    values=SIDES, state="readonly", width=5)
+                                    values=[""] + SIDES, state="readonly", width=5)
         self.side_cb.grid(row=0, column=5, sticky="w", padx=6, pady=3)
 
         ttk.Label(r0, text="Variety:").grid(row=0, column=6, sticky="e", padx=6, pady=3)
@@ -225,7 +225,7 @@ class BlockRowsTab(ttk.Frame):
         variety_id   = self._variety_map.get(self.variety_var.get())
         clone_id     = self._clone_map.get(self.clone_var.get())
         rootstock_id = self._rootstock_map.get(self.rootstock_var.get())
-        side         = self.side_var.get()
+        side         = self.side_var.get() or None   # empty selection → NULL
 
         if not block_id:
             messagebox.showerror("Validation", "Please select a Block.", parent=_top(self))
@@ -235,9 +235,6 @@ class BlockRowsTab(ttk.Frame):
             return None
         if not clone_id:
             messagebox.showerror("Validation", "Please select a Clone.", parent=_top(self))
-            return None
-        if side not in SIDES:
-            messagebox.showerror("Validation", "Side must be N, S, E or W.", parent=_top(self))
             return None
         try:
             row_number = int(self.row_num_entry.get().strip())
@@ -309,9 +306,9 @@ class BlockRowsTab(ttk.Frame):
         if dlg.result is None:
             return
 
-        side = dlg.result["Side (N/S/E/W)"].strip().upper()
-        if side not in SIDES:
-            messagebox.showerror("Validation", "Side must be N, S, E or W.", parent=_top(self))
+        side = dlg.result["Side (N/S/E/W)"].strip().upper() or None
+        if side is not None and side not in SIDES:
+            messagebox.showerror("Validation", "Side must be N, S, E, W or blank.", parent=_top(self))
             return
 
         def _oi(k):

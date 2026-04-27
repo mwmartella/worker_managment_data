@@ -173,7 +173,7 @@ class BlockRow(Base):
 
     row_number: Mapped[int] = mapped_column(Integer, nullable=False)
 
-    side: Mapped[str] = mapped_column(String(1), nullable=False)
+    side: Mapped[str | None] = mapped_column(String(1), nullable=True)
 
     variety_id: Mapped[uuid.UUID] = mapped_column(
         Uuid(as_uuid=True), ForeignKey("varieties.id"), nullable=False

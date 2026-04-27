@@ -341,7 +341,7 @@ class VarietyCloneRead(BaseModel):
 class BlockRowCreate(BaseModel):
     block_id: UUID
     row_number: int
-    side: str
+    side: str | None = None
     variety_id: UUID
     clone_id: UUID
     rootstock_id: UUID | None = None
@@ -375,7 +375,7 @@ class BlockRowRead(BaseModel):
     id: UUID
     block_id: UUID
     row_number: int
-    side: str
+    side: str | None
     variety_id: UUID
     clone_id: UUID
     rootstock_id: UUID | None
