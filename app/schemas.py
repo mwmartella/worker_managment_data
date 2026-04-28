@@ -446,6 +446,30 @@ class JobTypeRead(BaseModel):
     updated_at: datetime
 
 
+# ─────────────────────────────────────────────
+# AbsenceReason Schemas
+# ─────────────────────────────────────────────
+
+class AbsenceReasonCreate(BaseModel):
+    name: str
+    notes: str | None = None
+
+
+class AbsenceReasonUpdate(BaseModel):
+    name: str | None = None
+    notes: str | None = None
+
+
+class AbsenceReasonRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: UUID
+    name: str
+    notes: str | None
+    created_at: datetime
+    updated_at: datetime
+
+
 
 
 

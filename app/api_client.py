@@ -428,5 +428,33 @@ def delete_job_type(job_type_id: str) -> None:
     resp.raise_for_status()
 
 
+# ─────────────────────────────────────────────
+# Absence Reasons
+# ─────────────────────────────────────────────
+
+def get_absence_reasons() -> list[dict]:
+    return _handle(requests.get(f"{BASE_URL}/absence-reasons/"))
+
+
+def create_absence_reason(name: str, notes: str | None) -> dict:
+    return _handle(requests.post(f"{BASE_URL}/absence-reasons/", json={
+        "name": name,
+        "notes": notes or None,
+    }))
+
+
+def update_absence_reason(absence_reason_id: str, name: str, notes: str | None) -> dict:
+    return _handle(requests.patch(f"{BASE_URL}/absence-reasons/{absence_reason_id}", json={
+        "name": name,
+        "notes": notes or None,
+    }))
+
+
+def delete_absence_reason(absence_reason_id: str) -> None:
+    resp = requests.delete(f"{BASE_URL}/absence-reasons/{absence_reason_id}")
+    resp.raise_for_status()
+
+
+
 
 
