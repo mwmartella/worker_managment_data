@@ -358,6 +358,44 @@ class AbsenceReason(Base):
     )
 
 
+class Equipment(Base):
+    __tablename__ = "equipment"
+
+    id: Mapped[uuid.UUID] = mapped_column(
+        Uuid(as_uuid=True), primary_key=True, default=uuid.uuid4
+    )
+
+    name: Mapped[str] = mapped_column(String, nullable=False)
+
+    equipment_type: Mapped[str | None] = mapped_column(String, nullable=True)
+
+    manufacturer: Mapped[str | None] = mapped_column(String, nullable=True)
+
+    model: Mapped[str | None] = mapped_column(String, nullable=True)
+
+    serial_number: Mapped[str | None] = mapped_column(String, nullable=True)
+
+    manufactured_year: Mapped[int | None] = mapped_column(Integer, nullable=True)
+
+    purchase_year: Mapped[int | None] = mapped_column(Integer, nullable=True)
+
+    status: Mapped[str] = mapped_column(String, nullable=False, server_default="active")
+
+    site_id: Mapped[uuid.UUID | None] = mapped_column(
+        Uuid(as_uuid=True), ForeignKey("sites.id"), nullable=True
+    )
+
+    notes: Mapped[str | None] = mapped_column(String, nullable=True)
+
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False
+    )
+
+
 class Site(Base):
     __tablename__ = "sites"
 

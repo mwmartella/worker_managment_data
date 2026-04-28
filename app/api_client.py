@@ -455,6 +455,41 @@ def delete_absence_reason(absence_reason_id: str) -> None:
     resp.raise_for_status()
 
 
+# ─────────────────────────────────────────────
+# Equipment
+# ─────────────────────────────────────────────
+
+def get_equipment() -> list[dict]:
+    return _handle(requests.get(f"{BASE_URL}/equipment/"))
+
+
+def create_equipment(name: str, equipment_type: str | None, manufacturer: str | None,
+                     model: str | None, serial_number: str | None,
+                     manufactured_year: int | None, purchase_year: int | None,
+                     status: str, site_id: str | None, notes: str | None) -> dict:
+    return _handle(requests.post(f"{BASE_URL}/equipment/", json={
+        "name": name,
+        "equipment_type": equipment_type or None,
+        "manufacturer": manufacturer or None,
+        "model": model or None,
+        "serial_number": serial_number or None,
+        "manufactured_year": manufactured_year,
+        "purchase_year": purchase_year,
+        "status": status or "active",
+        "site_id": site_id or None,
+        "notes": notes or None,
+    }))
+
+
+def update_equipment(equipment_id: str, **kwargs) -> dict:
+    return _handle(requests.patch(f"{BASE_URL}/equipment/{equipment_id}", json=kwargs))
+
+
+def delete_equipment(equipment_id: str) -> None:
+    resp = requests.delete(f"{BASE_URL}/equipment/{equipment_id}")
+    resp.raise_for_status()
+
+
 
 
 

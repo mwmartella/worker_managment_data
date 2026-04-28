@@ -195,6 +195,12 @@ class ControlPanel(tk.Tk):
                 "description": "Manage workers, worker codes and shift times.",
                 "command":     self._open_worker_management,
             },
+            {
+                "icon":        "🚜",
+                "title":       "Assets",
+                "description": "Manage farm equipment and physical assets.",
+                "command":     self._open_assets,
+            },
             # ── future modules go here ────────────
             # {
             #     "icon":        "🏡",
@@ -266,4 +272,8 @@ class ControlPanel(tk.Tk):
     def _open_operations_setup(self):
         from app.operations_gui import OperationsSetupWindow
         OperationsSetupWindow(self)
+
+    def _open_assets(self):
+        from app.assets_gui import AssetsWindow
+        AssetsWindow(self)
 

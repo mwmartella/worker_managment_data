@@ -470,6 +470,54 @@ class AbsenceReasonRead(BaseModel):
     updated_at: datetime
 
 
+# ─────────────────────────────────────────────
+# Equipment Schemas
+# ─────────────────────────────────────────────
+
+class EquipmentCreate(BaseModel):
+    name: str
+    equipment_type: str | None = None
+    manufacturer: str | None = None
+    model: str | None = None
+    serial_number: str | None = None
+    manufactured_year: int | None = None
+    purchase_year: int | None = None
+    status: str = "active"
+    site_id: UUID | None = None
+    notes: str | None = None
+
+
+class EquipmentUpdate(BaseModel):
+    name: str | None = None
+    equipment_type: str | None = None
+    manufacturer: str | None = None
+    model: str | None = None
+    serial_number: str | None = None
+    manufactured_year: int | None = None
+    purchase_year: int | None = None
+    status: str | None = None
+    site_id: UUID | None = None
+    notes: str | None = None
+
+
+class EquipmentRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: UUID
+    name: str
+    equipment_type: str | None
+    manufacturer: str | None
+    model: str | None
+    serial_number: str | None
+    manufactured_year: int | None
+    purchase_year: int | None
+    status: str
+    site_id: UUID | None
+    notes: str | None
+    created_at: datetime
+    updated_at: datetime
+
+
 
 
 
