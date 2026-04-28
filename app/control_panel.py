@@ -184,6 +184,12 @@ class ControlPanel(tk.Tk):
                 "command":     self._open_planting_material,
             },
             {
+                "icon":        "⚙️",
+                "title":       "Operations Setup",
+                "description": "Configure job types and operational reference data.",
+                "command":     self._open_operations_setup,
+            },
+            {
                 "icon":        "👷",
                 "title":       "Worker Management",
                 "description": "Manage workers, worker codes and shift times.",
@@ -256,4 +262,8 @@ class ControlPanel(tk.Tk):
     def _open_planting_material(self):
         from app.planting_gui import PlantingMaterialWindow
         PlantingMaterialWindow(self)
+
+    def _open_operations_setup(self):
+        from app.operations_gui import OperationsSetupWindow
+        OperationsSetupWindow(self)
 

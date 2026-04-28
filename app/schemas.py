@@ -419,6 +419,33 @@ class RowPortionRead(BaseModel):
     updated_at: datetime
 
 
+# ─────────────────────────────────────────────
+# JobType Schemas
+# ─────────────────────────────────────────────
+
+class JobTypeCreate(BaseModel):
+    name: str
+    category: str | None = None
+    notes: str | None = None
+
+
+class JobTypeUpdate(BaseModel):
+    name: str | None = None
+    category: str | None = None
+    notes: str | None = None
+
+
+class JobTypeRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: UUID
+    name: str
+    category: str | None
+    notes: str | None
+    created_at: datetime
+    updated_at: datetime
+
+
 
 
 

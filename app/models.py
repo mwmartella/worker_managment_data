@@ -316,6 +316,28 @@ class Field(Base):
     )
 
 
+class JobType(Base):
+    __tablename__ = "job_types"
+
+    id: Mapped[uuid.UUID] = mapped_column(
+        Uuid(as_uuid=True), primary_key=True, default=uuid.uuid4
+    )
+
+    name: Mapped[str] = mapped_column(String, nullable=False, unique=True)
+
+    category: Mapped[str | None] = mapped_column(String, nullable=True)
+
+    notes: Mapped[str | None] = mapped_column(String, nullable=True)
+
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False
+    )
+
+
 class Site(Base):
     __tablename__ = "sites"
 

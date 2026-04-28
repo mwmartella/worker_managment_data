@@ -398,5 +398,35 @@ def delete_row_portion(portion_id: str) -> None:
     resp.raise_for_status()
 
 
+# ─────────────────────────────────────────────
+# Job Types
+# ─────────────────────────────────────────────
+
+def get_job_types() -> list[dict]:
+    return _handle(requests.get(f"{BASE_URL}/job-types/"))
+
+
+def create_job_type(name: str, category: str | None, notes: str | None) -> dict:
+    return _handle(requests.post(f"{BASE_URL}/job-types/", json={
+        "name": name,
+        "category": category or None,
+        "notes": notes or None,
+    }))
+
+
+def update_job_type(job_type_id: str, name: str,
+                    category: str | None, notes: str | None) -> dict:
+    return _handle(requests.patch(f"{BASE_URL}/job-types/{job_type_id}", json={
+        "name": name,
+        "category": category or None,
+        "notes": notes or None,
+    }))
+
+
+def delete_job_type(job_type_id: str) -> None:
+    resp = requests.delete(f"{BASE_URL}/job-types/{job_type_id}")
+    resp.raise_for_status()
+
+
 
 
